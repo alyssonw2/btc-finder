@@ -50,7 +50,7 @@ rl.question(`Escolha uma carteira puzzle( ${chalk.cyan(1)} - ${chalk.cyan(160)})
 const start = async () => {
     let Pesos = [];
 
-    for (let i = 9999999; i >= 1; i--) {
+    for (let i = 100; i >= 1; i--) {
         Pesos.push(i);
     }
 

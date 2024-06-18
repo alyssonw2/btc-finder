@@ -41,50 +41,87 @@ rl.question(`Escolha uma carteira puzzle( ${chalk.cyan(1)} - ${chalk.cyan(160)})
     console.log('Numero possivel de chaves:', chalk.yellow(parseInt(BigInt(max) - BigInt(min)).toLocaleString('pt-BR')))
     key = BigInt(min)
 
-    start()
+    start(min, max)
     rl.close();
 
 });
 
+async function generateRandomInteger(minHex, maxHex) {
+    // Converter os valores hexadecimais para inteiros
+    const min = parseInt(minHex, 16);
+    const max = parseInt(maxHex, 16);
 
-const start = async () => {
-    let Pesos = [];
-
-    for (let i = 100; i >= 1; i--) {
-        Pesos.push(i);
+    // Garantir que min seja menor que max
+    if (min > max) {
+        throw new Error("O valor mínimo deve ser menor que o valor máximo.");
     }
 
-    function isPrime(num) {
-        if (num <= 1) return false;
-        if (num <= 3) return true;
+    // Gerar um número inteiro aleatório no intervalo [min, max]
+    const randomInt = Math.floor(Math.random() * (max - min + 1)) + min;
 
-        if (num % 2 === 0 || num % 3 === 0) return false;
+    return randomInt;
+}
 
-        for (let i = 5; i * i <= num; i += 6) {
-            if (num % i === 0 || num % (i + 2) === 0) return false;
+let h = []
+
+function displayMemoryUsage() {
+    const memoryUsage = process.memoryUsage();
+
+    console.log('Memory Usage:');
+    console.log(`RSS: ${formatMemory(memoryUsage.rss)}`);
+    console.log(`Heap Total: ${formatMemory(memoryUsage.heapTotal)}`);
+    console.log(`Heap Used: ${formatMemory(memoryUsage.heapUsed)}`);
+    console.log(`External: ${formatMemory(memoryUsage.external)}`);
+    console.log(`Array Buffers: ${formatMemory(memoryUsage.arrayBuffers)}`);
+}
+
+function formatMemory(bytes) {
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+// Exemplo de uso:
+
+
+
+const start = async (min, max) => {
+
+    setInterval(() => {
+        console.clear()
+        console.log(h.length)
+        displayMemoryUsage();
+
+    }, 1000);
+
+    while (true) {
+
+
+        let numero = await generateRandomInteger(min, max)
+
+        numero = BigInt(numero)
+        if (!h.includes(numero)) {
+            h.push(numero)
+            //console.log(numero)
+
+
+            await new Promise(async (resolve, reject) => {
+                //console.clear()
+                await encontrarBitcoins(numero, min, max, () => shouldStop, numero)
+                    .then(() => {
+                        //console.log(`encontrarBitcoins com peso ${numero} concluído.`);
+                        resolve(); // Resolve a Promise após o retorno de encontrarBitcoins
+                    })
+                    .catch((error) => {
+                        reject(error); // Rejeita a Promise em caso de erro
+                    });
+
+            });
+            // Após o retorno de encontrarBitcoins e resolução da Promise, o loop avança para a próxima iteração.
         }
 
-        return true;
     }
 
-    // ajuste primos 
-    Pesos = Pesos.filter(isPrime);
 
-    console.log(Pesos);
 
-    for (let P of Pesos) {
-        await new Promise((resolve, reject) => {
-            encontrarBitcoins(key, min, max, () => shouldStop, P)
-                .then(() => {
-                    console.log(`encontrarBitcoins com peso ${P} concluído.`);
-                    resolve(); // Resolve a Promise após o retorno de encontrarBitcoins
-                })
-                .catch((error) => {
-                    reject(error); // Rejeita a Promise em caso de erro
-                });
-        });
-        // Após o retorno de encontrarBitcoins e resolução da Promise, o loop avança para a próxima iteração.
-    }
 
     console.log("Todas as iterações concluídas.");
 }
